@@ -454,6 +454,14 @@ def is_termux():
 	return '/com.termux' in sys.executable
 istermux=isTermux=is_termux
 
+def is_vercel():
+	'''
+drwx------  2 sbx_user1051  990 4.0K Jul  1 14:46 tmp
+其他全部是 root
+drwxr-xr-x  1 root         root 4.0K Jan  1  1970 var
+'''	
+	return os.getenv('VERCEL')
+
 def iscyg():
 	return 'cygwin' in  platform_system().lower()
 # gipy=None#这个不是qgb.ipy, 是否与U.F U.T 这样的风格冲突？
@@ -686,8 +694,11 @@ def get_test_path():
 		s='/test/'
 		home=os.getenv('HOME')
 		if not home:
-			if istermux():
+			if is_termux():
 				home='/data/data/com.termux/files/home'
+			elif is_vercel():		
+				home='/tmp' #AWS lambda
+				
 			#elif 添加其他情况
 			else:
 				home=''
@@ -1361,8 +1372,12 @@ def cmd(*a,shell=True,**ka):
 		return py.No('sb.run err', e,a,ka)
 
 	try:
-		so=T.auto_decode(r.stdout)
-		se=T.auto_decode(r.stderr)
+		if encoding:
+			so=r.stdout.decode(encoding)
+			se=r.stderr.decode(encoding)	
+		else:
+			so=T.auto_decode(r.stdout)
+			se=T.auto_decode(r.stderr)
 		if not se:
 			return so
 		else:

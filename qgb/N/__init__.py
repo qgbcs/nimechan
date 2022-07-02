@@ -305,7 +305,7 @@ http_external_kargs={'ipinfo.io':{'encoding':'utf-8'},},
 				re.append((k,v))  # 超时3.4 还未得到结果 的不会返回 
 		return re+r
 	return d
-get_public_ip=get_public_ipv4
+get_pub_ip=get_public_ip=get_public_ipv4
 
 def ftp_client(cwd=py.No('history or /',no_raise=1),
 	host=py.No('auto get ftp.host',no_raise=1),port=3721,user='', passwd='',ftp_encoding='utf-8', acct='',
@@ -948,6 +948,9 @@ def rpcSetVariable(*obj,base=py.No('auto history e.g. [http://]127.0.0.1:23571[/
 	if len(obj)==1 and ',' not in varname:
 		obj=obj[0]
 
+	if not obj and py.len(ka)==1:
+		varname,obj=U.get_dict_item(ka)
+
 	if not base:
 		base=get_remote_rpc_base(change=False)
 	else:
@@ -1025,9 +1028,12 @@ key compatibility :  key='#rpc\n'==chr(35)+'rpc'+chr(10)
 	
 	def _flaskEval(code=None):
 		nonlocal globals,locals 
-		if not code:code=T.urlDecode(_request.url)
+		if not code:code=T.url_decode(_request.url)
 		code=T.sub(code,_request.url_root )
 		if key and code.startswith(key):code=code[py.len(key):]
+		if U.is_vercel():
+			code=T.url_decode(code)
+			if code.endswith('/'):code=code[:-1]
 		# U.log( (('\n'+code) if '\n' in code else code)[:99]	)
 		# U.ipyEmbed()()
 		_response=make_response()
@@ -1162,6 +1168,22 @@ def get_socket_req(PORT = 65432,HOST = '127.7.7.7'):
 		req, addr = s.accept()
 		return req, addr
 
+def flask_app_route(app,rule='',view_func=None,methods=('GET','POST'),**ka):
+	if not rule or not view_func:raise py.ArgumentError(rule,view_func)
+	
+	U,T,N,F=py.importUTNF()
+	# , endpoint=U.stime()
+	if py.istr(view_func):
+		# view_func=lambda :py.str(view_func) # 不能这样写 ，总是返回重新赋值后 的 view_func
+		U.set(py.hex(py.id(app))+rule,view_func)
+		view_func=lambda :U.get(py.hex(py.id(app))+rule)
+	
+	app.add_url_rule(rule, view_func=view_func, methods=methods)
+	
+	return app.url_map._rules
+	
+flask_url_map=flask_app_route	
+
 def get_flask_request_post_data(name='y'):
 	from flask import request as q
 	U,T,N,F=py.importUTNF()
@@ -1170,8 +1192,7 @@ def get_flask_request_post_data(name='y'):
 	U.get_ipy().user_ns[name]=y
 	return F.dill_dump(obj=y,file='C:/test/{}-{}={}.dill'.format(name,U.len(y),U.stime()))
 rec=recive=receive=get_flask_request_post_data
-	
-	
+
 
 def get_flask_request_a(request=None,return_other_url=False,return_request=False,raise_err=False,**ka):
 	''' #TODO raise_err
@@ -1327,12 +1348,18 @@ def pdf2html(url,response=None,zoom=None,path=None,pw=None):
 		return do_resp(F.read(html_file))
 
 def flask_text_response(response,data='',encoding=py.No('auto',no_raise=1),file='',download_char='\x02\x06\x0f\x11\x12\x19\x1c\x1e'):
+	''' 手机浏览器 保存链接  如果是 utf-8 乱码 ，gb18030 正常
+	
+'''	
 	U,T,N,F=py.importUTNF()
 	if py.istr(data):
 		if U.one_in(download_char,data):
 			response.headers['Content-Type']='text/html;charset=utf-8';
 		else:
 			response.headers['Content-Type']='text/plain;charset=utf-8'	
+		if encoding:
+			response.headers['Content-Type']=response.headers['Content-Type'].replace('utf-8',encoding)
+			data=data.encode(encoding)
 	elif py.isbyte(data):
 		if not encoding:encoding=T.detect(data[:9999])
 		response.headers['Content-Type']='text/plain;charset=%s'%(
@@ -1423,7 +1450,7 @@ def get_chunk(full_path,byte1, byte2=None,):
 		chunk = f.read(length)
 	return chunk, start, length, file_size
 
-def get_request_range(request):
+def flask_get_request_range(request):
 	import re
 	range_header = request.headers.get('Range', None)
 	if not range_header:
@@ -1439,6 +1466,7 @@ def get_request_range(request):
 			byte2 = int(groups[1])
 	return byte1,byte2
 	# raise py.ArgumentError(request)
+get_request_range=flask_get_request_range
 	
 def flask_media_stream_response(request,response,file=None,):		
 	from flask import stream_with_context
