@@ -3661,9 +3661,9 @@ def get_modules_by_path(modPath=None):
 	else:return   ['U', 'T', 'N', 'F', 'py', 'ipy', 'Win', 'Clipboard']
 get_qpsu_all_modules=get_modules_by_path
 
-def get_all_modules_list(name_padding=57):	
-	return [StrRepr(k,size=name_padding) k in sys.modules]
-	return [[StrRepr(k,size=name_padding),v] for k,v in sys.modules.items()]
+def get_all_modules_list(name_padding=57):
+	return [StrRepr(k,size=name_padding) for k in sys.modules]
+	# return [[StrRepr(k,size=name_padding),v] for k,v in sys.modules.items()]
 getMods=get_mods=getAllMod=getAllModules=getAllMods=get_all_modules_list
 
 def getModPathForImport():
