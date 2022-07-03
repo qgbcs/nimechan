@@ -543,6 +543,18 @@ def pppoe():
 506 192.168.2.1+192.168.1.1 073198799737 777124	
 
 '''
+def flask_request_log():
+	from flask import request
+	U,T,N,F=py.importUTNF()	
+	rq=U.dir(request)
+	rq=U.StrRepr(U.pformat(rq))
+	
+	r=U.stime(),rq
+	rl=U.get_or_set('req_log',[])
+	rl.append(r)
+	return py.len(rl)
+req_log=flask_request_log	
+
 skip_response_headers={
 	'Transfer-Encoding': 'chunked',
 	'transfer-encoding': 'chunked',
@@ -1199,7 +1211,14 @@ def get_flask_request_a(request=None,return_other_url=False,return_request=False
 a=T.subr(u,T.u23)#'%23-'	
 
 pythonAnywhere : multi[ // or  %2F%2F%2F%2F%2F ] in url will auto convert to one / ,it can't bypass
+
+vercel : !curl -vvvik "https://vercel-django-example-ten.vercel.app/r=T.az%23-/a"   
+< HTTP/1.1 308 Permanent Redirect
+< location: /r=T.az%23-/a/
+< Refresh: 0;url=/r=T.az%23-/a/
+
 	'''
+	U,T,N,F=py.importUTNF()
 	def _return(ax):
 		nonlocal u,return_other_url,U,request
 		if return_other_url:
@@ -1227,8 +1246,9 @@ pythonAnywhere : multi[ // or  %2F%2F%2F%2F%2F ] in url will auto convert to one
 				return_r= u,T.url_decode(ax)
 			else:
 				return_r=  u,ax
-		else:
-			return_r=  T.url_decode(ax)
+		else: #return_other_url
+			if ax:return_r=  T.url_decode(ax)
+			else :return_r=ax
 		if return_request:	
 			return_r=py.list(return_r)
 			return_r.insert(0,request)
@@ -1245,6 +1265,8 @@ pythonAnywhere : multi[ // or  %2F%2F%2F%2F%2F ] in url will auto convert to one
 					break
 		except Exception as e:
 			return _return( py.No(e) )
+	elif py.isdict(request) and 'PATH_INFO' in request: # wsgi def app(env,start_response):
+		u=request['PATH_INFO']  #  'PATH_INFO': '/r=env%23-4/',not %2523
 	else:
 		try:
 			u=request.url
@@ -1260,6 +1282,8 @@ pythonAnywhere : multi[ // or  %2F%2F%2F%2F%2F ] in url will auto convert to one
 		a=T.sub_tail(u,'%23-')
 	elif '#-' in u: # pythonAnywhere
 		a=T.sub_tail(u,'#-')
+	elif '%2523-' in u: # vercel
+		a=T.sub_tail(u,'%2523-')
 	else:
 		if '%23' not in u:
 			msg_23='%23 not in request.url'

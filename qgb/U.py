@@ -3637,7 +3637,7 @@ def getModsBy__all__(modPath=None):
 	fs=[i for i in fs if i.lower().endswith('.py')]
 	
 	
-def getAllMods(modPath=None):
+def get_modules_by_path(modPath=None):
 	r=[]
 	if not modPath:modPath=getModPath()
 	if 'F' in globals():
@@ -3659,7 +3659,12 @@ def getAllMods(modPath=None):
 		r.append(i[:-3])
 	if r:return [i.replace('/','.') for i in r]
 	else:return   ['U', 'T', 'N', 'F', 'py', 'ipy', 'Win', 'Clipboard']
-getAllMod=getAllModules=getAllMods
+get_qpsu_all_modules=get_modules_by_path
+
+def get_all_modules_list():	
+	return [[U.StrRepr(k,size=57),v] for k,v in sys.modules.items()]
+getMods=get_mods=getAllMod=getAllModules=getAllMods=get_all_modules_list
+
 def getModPathForImport():
 	return getModPath(qgb=False)
 	sp=os.path.dirname(getModPath())# dirname/ to dirname
@@ -4323,6 +4328,8 @@ def get_obj_file_lineno(a,lineno=0,auto_file_path=True):
 			if r:return r
 		a=get_obj_module(a)#python无法获取class行数？https://docs.python.org/2/library/inspect.html
 		return get_obj_file_lineno(a=a,lineno=lineno,auto_file_path=auto_file_path)
+get_obj_fn=get_obj_file_lineno
+
 	
 def get_net_io_bytes():
 	# global F
