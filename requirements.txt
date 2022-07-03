@@ -3,3 +3,4 @@ requests
 cchardet
 dill
 psutil
+wcwidth
