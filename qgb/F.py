@@ -67,7 +67,7 @@ shutil.make_archive(
 	import shutil
 	U,T,N,F=py.importUTNF()
 	if not target:
-		target=T.sub_last(F.get_dirname_from_full_path(f),'/','/')
+		target=T.sub_last(F.get_dirname_from_full_path(source),'/','/')
 		if not target:
 			target=T.file_legalized(target)
 	target=auto_path(target)
