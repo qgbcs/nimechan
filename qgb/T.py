@@ -621,6 +621,7 @@ col=column=columnize
 
 def justify(s,size=0,char=' ',method=py.No('try use wc_ljust'),cut=False):#'ljust'
 	''' ljust() 方法返回一个原字符串左对齐,并使用空格填充右边至指定长度的新字符串。
+#当提供size 参数时，小心 ModuleNotFoundError: No module named 'wcwidth'	 # 已经fix部分情况
 	'''
 	s= string(s)
 	if size<1:
@@ -642,7 +643,7 @@ def justify(s,size=0,char=' ',method=py.No('try use wc_ljust'),cut=False):#'ljus
 			return wc_cut(s,size)
 		return method(s,size,char) #TODO 统一参数
 	raise NotImplementedError('method must str.funcName or callable')
-padding=justify
+padding=justfy=justify
 	
 def encode(s,encoding):
 	'''
