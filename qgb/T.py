@@ -619,13 +619,20 @@ def columnize(iterable,width=120,**ka):
 	return r
 col=column=columnize
 
-def justify(s,size=0,char=' ',method=wc_ljust,cut=False):#'ljust'
+def justify(s,size=0,char=' ',method=py.No('try use wc_ljust'),cut=False):#'ljust'
 	''' ljust() 方法返回一个原字符串左对齐,并使用空格填充右边至指定长度的新字符串。
 	'''
 	s= string(s)
 	if size<1:
 		return s
 		# raise py.ArgumentError('size must > 0',size)
+	if not method:
+		try:
+			from wcwidth import wcwidth
+			method=wc_ljust
+		except Exception as e:
+			method='ljust'
+		
 	if py.istr(method):
 		if cut and len(s)>=size:
 			return s[:size]

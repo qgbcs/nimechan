@@ -3663,7 +3663,7 @@ get_qpsu_all_modules=get_modules_by_path
 
 def get_all_modules_list(name_padding=57):
 	ms=py.list(sys.modules)
-	return ms
+	# return ms
 	return [StrRepr(k,size=name_padding) for k in ms]
 	# return [[StrRepr(k,size=name_padding),v] for k,v in sys.modules.items()]
 getMods=get_mods=getAllMod=getAllModules=getAllMods=get_all_modules_list
@@ -7091,7 +7091,7 @@ U.StrRepr(b'3232',encoding='ascii')	[<class 'qgb.U.StrRepr'>, (b'3232',), {'enco
 				return repr(self, **self.ka ) # try fix：传入 self
 			else:
 				return py.str(repr)
-			
+		#当提供size 参数时，小心 ModuleNotFoundError: No module named 'wcwidth'	
 		return T.justify(super().__str__(),**self.ka)
 	# return (self.padding*self.padding_times)+ super().__str__() +(self.padding*self.padding_times)
 T.sreol=T.RLF=T.reol=T.REOL=StrRepr(T.EOL)
