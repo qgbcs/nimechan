@@ -1,2 +1,5 @@
 flask
 requests
+cchardet
+dill
+psutil
