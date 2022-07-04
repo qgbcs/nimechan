@@ -4043,11 +4043,13 @@ def set_env_path(append=[],delete=[]):
 	os.environ['PATH']=os.pathsep.join(ps)		
 	return ps
 
-def set_env(name='',value='',**ka):
+def set_env(name='',value='',force_value_str=False,**ka):
 	''' ka k,v must str,otherwise TypeError: str expected, not int
 '''	
+	
 	if not name and not value and ka:
-		for k,v in ka.items:
+		for k,v in ka.items():
+			if force_value_str:v=py.str(v)
 			os.environ[k]=v
 		return ka
 	else:
