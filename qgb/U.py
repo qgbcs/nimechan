@@ -4043,9 +4043,16 @@ def set_env_path(append=[],delete=[]):
 	os.environ['PATH']=os.pathsep.join(ps)		
 	return ps
 
-def set_env(name,value):
-	os.environ[name]=value
-	return value
+def set_env(name='',value='',**ka):
+	''' ka k,v must str,otherwise TypeError: str expected, not int
+'''	
+	if not name and not value and ka:
+		for k,v in ka.items:
+			os.environ[k]=v
+		return ka
+	else:
+		os.environ[name]=value
+		return value
 	
 def getEnviron(name='PATH'):
 	'''
