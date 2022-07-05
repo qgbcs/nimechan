@@ -1204,9 +1204,9 @@ def flask_app_route(app,rule='',view_func=None,methods=('GET','POST'),log_req=Fa
 	# , endpoint=U.stime()
 	if rule and not view_func:
 		if py.isdict(rule):
-		for u,v in rule.items():
-			flask_app_route(app,rule=u,view_func=v)
-		return app.url_map._rules
+			for u,v in rule.items():
+				flask_app_route(app,rule=u,view_func=v)
+			return app.url_map._rules
 		
 	if py.istr(view_func):
 		# view_func=lambda :py.str(view_func) # 不能这样写 ，总是返回重新赋值后 的 view_func
