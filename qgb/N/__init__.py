@@ -1059,7 +1059,8 @@ key compatibility :  key='#rpc\n'==chr(35)+'rpc'+chr(10)
 		if U.is_vercel():
 			payload = T.json_loads(_request.environ['event']['body'])
 			_request.url=payload['path']
-			code=T.url_decode(payload['path'][py.len(key):])
+			code=payload['path'][1:]
+			code=T.url_decode(code[py.len(key):])
 			
 			if code.endswith('/'):code=code[:-1]
 			
