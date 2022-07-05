@@ -4026,7 +4026,7 @@ File:      c:\qgb\anaconda3\lib\site-packages\keyboard\__init__.py'''
 
 key_action=key_actions=system_actions=system_action=sys_act=sys_acts=sys_actions=sys_action=simulate_system_actions
 
-def get_all_env(return_list=False):
+def get_all_env(return_list=False,index=False):
 	r=py.dict(os.environ)
 	if return_list:
 		U=py.importU()
@@ -4038,8 +4038,11 @@ def get_all_env(return_list=False):
 				return_list=py.list(return_list)
 				return_list.append(138-return_list[0]) #139 不行，换行
 			rl=[]
-			for k,v in r.items():
-				rl.append( [U.StrRepr(k,size=return_list[0]),U.StrRepr(v,size=return_list[1]) ] )
+			for n,(k,v) in py.enumerate(r.items()):
+				row=[U.StrRepr(k,size=return_list[0]),U.StrRepr(v,size=return_list[1]) ]
+				if index:
+					row.insert(0,U.IntRepr(n,size=3))
+				rl.append( row )
 			return rl	
 		else:	
 			return py.list(r.items())
