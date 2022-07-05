@@ -1058,6 +1058,7 @@ key compatibility :  key='#rpc\n'==chr(35)+'rpc'+chr(10)
 			payload = T.json_loads(_request.environ['event']['body'])
 			_request.url=root_url[:-1]+payload['path']
 			code= payload['path'][1+py.len(key):]
+			code=T.url_decode(code)
 			if code.endswith('/'):code=code[:-1]
 		else:
 			if not code:code=T.url_decode(_request.url)
