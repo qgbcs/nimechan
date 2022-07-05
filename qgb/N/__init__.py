@@ -1057,8 +1057,12 @@ key compatibility :  key='#rpc\n'==chr(35)+'rpc'+chr(10)
 		code=T.sub(code,_request.url_root )
 		if key and code.startswith(key):code=code[py.len(key):]
 		if U.is_vercel():
-			code=T.url_decode(code)
+			payload = T.json_loads(_request.environ['event']['body'])
+			_request.url=payload['path']
+			code=T.url_decode(payload['path'][py.len(key):])
+			
 			if code.endswith('/'):code=code[:-1]
+			
 		# U.log( (('\n'+code) if '\n' in code else code)[:99]	)
 		# U.ipyEmbed()()
 		_response=make_response()
