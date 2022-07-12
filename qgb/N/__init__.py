@@ -1306,8 +1306,8 @@ vercel : !curl -vvvik "https://vercel-django-example-ten.vercel.app/r=T.az%23-/a
 					break
 		except Exception as e:
 			return _return( py.No(e) )
-	elif py.isdict(request) and 'PATH_INFO' in request: # wsgi def app(env,start_response):
-		u=request['PATH_INFO']  #  'PATH_INFO': '/r=env%23-4/',not %2523
+	# elif py.isdict(request) and 'PATH_INFO' in request: # wsgi def app(env,start_response):
+		# u=request['PATH_INFO']  #  'PATH_INFO': '/r=env%23-4/',not %2523
 	else:
 		try:
 			u=request.url
@@ -1316,6 +1316,9 @@ vercel : !curl -vvvik "https://vercel-django-example-ten.vercel.app/r=T.az%23-/a
 		
 	U,T,N,F=py.importUTNF()
 	return_other_url =U.get_duplicated_kargs(ka,'return_other_url','return_head_code','return_url','return_head_url','return_url_head','return_front_url',default=return_other_url)
+	
+	if u.endswith('/') and U.is_vercel():
+		u=u[:-1]
 	
 	if '%23=' in u:
 		a=T.sub_tail(u,'%23=')
