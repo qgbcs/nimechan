@@ -4,3 +4,4 @@ cchardet
 dill
 psutil
 wcwidth
+ipython
