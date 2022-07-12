@@ -1335,8 +1335,9 @@ vercel : !curl -vvvik "https://vercel-django-example-ten.vercel.app/r=T.az%23-/a
 				return _return( py.No(msg_23) )
 		a=T.sub_tail(u,'%23')
 		
-	if a.endswith('/') and U.is_vercel():
-		a=a[:-1]
+	if U.is_vercel(): #todo 速度优化
+		if a.endswith('/'):
+			a=a[:-1]
 		hs=['https:/','http:/']
 		for v in hs:
 			if v in a and v+'/' not in a:
