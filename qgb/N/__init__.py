@@ -1317,8 +1317,6 @@ vercel : !curl -vvvik "https://vercel-django-example-ten.vercel.app/r=T.az%23-/a
 	U,T,N,F=py.importUTNF()
 	return_other_url =U.get_duplicated_kargs(ka,'return_other_url','return_head_code','return_url','return_head_url','return_url_head','return_front_url',default=return_other_url)
 	
-	if u.endswith('/') and U.is_vercel():
-		u=u[:-1]
 	
 	if '%23=' in u:
 		a=T.sub_tail(u,'%23=')
@@ -1336,6 +1334,15 @@ vercel : !curl -vvvik "https://vercel-django-example-ten.vercel.app/r=T.az%23-/a
 			else:
 				return _return( py.No(msg_23) )
 		a=T.sub_tail(u,'%23')
+		
+	if a.endswith('/') and U.is_vercel():
+		a=a[:-1]
+		hs=['https:/','http:/']
+		for v in hs:
+			if v in a and v+'/' not in a:
+				a=a.replace(v,v+'/')
+		
+		
 		
 	
 	return _return(a )
