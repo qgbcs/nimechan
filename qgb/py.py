@@ -23,6 +23,9 @@ if is2():
 	
 if is3():
 	from builtins import *
+	from builtins import __import__
+	# from __builtin__ import __import__ #Error  No module named '__builtin__'  但是在Win py3.74 下却可以？
+	
 	from importlib import reload
 		
 class Class:pass
@@ -276,7 +279,7 @@ except Exception as ei3:pass
 		# pdb()
 		import U
 		raise Exception('#Error import U in qgb.py')
-importU=from_qgb_import
+importU=from_qgb=from_qgb_import
 
 def importT():
 	return from_qgb_import('T')

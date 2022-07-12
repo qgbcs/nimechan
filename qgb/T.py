@@ -376,13 +376,15 @@ def slice(a,start, stop=None, step=1):
 		return py.No(e)
 get=char_at=charAt=get_char_at=slice		
 		
-def search_return_position(text,*targets,case_sensitive=True,a=0,b=0,c=0,dict=False,**ka):
+def search_return_position(text,*targets,case_sensitive=True,a=0,b=0,c=0,default_c_size=100,return_t=False,return_dict=False,c_StrRepr=True,**ka):
 	U=py.importU()
 	a=U.get_duplicated_kargs(ka,'A',default=a)
 	b=U.get_duplicated_kargs(ka,'B',default=b)
 	c=U.get_duplicated_kargs(ka,'C',default=c)
+	return_t=U.get_duplicated_kargs(ka,'return_t','t','target',default=return_t)
+	c_StrRepr=U.get_duplicated_kargs(ka,'c_StrRepr','crepr','cstrrepr',default=c_StrRepr)
 	case_sensitive=U.get_duplicated_kargs(ka,'cs','case','upper','caseSensitive',default=case_sensitive)
-	dict=U.get_duplicated_kargs(ka,'d','return_dict','rd',default=dict)
+	return_dict=U.get_duplicated_kargs(ka,'d','return_dict','rd','dict',default=return_dict)
 	r=[]
 	d={}
 	def _append(t,i,sub=''):
@@ -391,10 +393,17 @@ def search_return_position(text,*targets,case_sensitive=True,a=0,b=0,c=0,dict=Fa
 				U.dict_add_value_list(d,t,(i,sub))
 			else  :U.dict_add_value_list(d,t,i)
 		else:
+			row=[i]
 			if sub:
-				r.append([t,i,sub ])		
-			else  :r.append([t,i, ])
-			
+				row.append( sub)		
+			if return_t:
+				row.insert(0,t)		
+				
+			r.append(row)
+	len_text_digits=py.len(str(py.len(text))) #不是digitals		
+	c_isint=py.isint(c)
+	c_len_2= U.len(c)==2
+	
 	for t in py.set(targets):
 		i=0
 		# re.finditer(re.escape)
@@ -407,9 +416,21 @@ def search_return_position(text,*targets,case_sensitive=True,a=0,b=0,c=0,dict=Fa
 					c0=py.max(i-a,0)
 					c1=i+py.len(t)+b
 					if c:
-						c0=py.max(i-c,0)
-						c1=i+py.len(t)+c
-					_append( t,i,text[c0:c1] )
+						if c_isint:
+							c0=py.max(i-c,0)
+							c1=i+py.len(t)+c
+						elif c_len_2:
+							c0=text.rfind(c[0],0,i)
+							c1=text.find(c[1],i)
+							if c0==-1 or c0-i>default_c_size:c0=i-(default_c_size//2)
+							if c1==-1 or i-c1>default_c_size:c1=i-(default_c_size//2)
+							c0+=1
+						else:
+							raise py.ArgumentUnsupported(c)
+					if c_StrRepr:		
+						_append( t,U.IntRepr(i,size=len_text_digits+1),U.StrRepr(text[c0:c1],size=default_c_size) )
+					else:	
+						_append( t,i,text[c0:c1] )
 				else:
 					_append(t,i,)
 			i+=1 # 不然 死循环		
@@ -818,7 +839,8 @@ def url_arg_join(url_base='',arg_dict=None):
 		
 	rs=[]
 	for k,v in arg_dict.items():
-		rs.append('{}={}'.format(k,url_encode(v)))
+		v=url_encode(py.str(v) )
+		rs.append('{}={}'.format(k,v))
 	sr='&'.join(rs)
 	return url_base+sr
 url_join_arg=join_url_arg=url_join_arg_dict=url_arg_join
@@ -871,8 +893,12 @@ def get_url_args(url,*a,default=py.No('Not found')):
 	return r
 	
 	
-def replace_url_arg(url,arg_name_or_dict,new=py.No('if dict, this no')):
+def replace_url_arg(url,arg_name_or_dict=py.No('ka or dict'),new=py.No('if dict, this no'),**ka):
 	u,d=parse_url_arg(url,return_not_arg_part=True)
+	
+	if not arg_name_or_dict and ka:
+		arg_name_or_dict=ka
+	
 	if py.isdict(arg_name_or_dict) and py.isno(new):
 		for k,v in arg_name_or_dict.items():
 			d[k]=v
@@ -886,7 +912,7 @@ def replace_url_arg(url,arg_name_or_dict,new=py.No('if dict, this no')):
 		raise py.ArgumentError('Not arg_name_or_dict',url,arg_name_or_dict,new)	
 	return u+url_arg_join(d)	
 	
-replace_url_args=replace_url_arg
+replace_url=url_replace=url_arg_replace=replace_url_args=replace_url_arg
 	
 def FileNameToURL(a):
 	'''
@@ -1895,7 +1921,7 @@ T.subLast('C:/test/list_bought_items.htm/10_15_知乎周源_list_bought_items.ht
 	# i1+=len(s1)
 	# U.pln( i1,i2
 	# return s[i1:i2]
-sublast=subt=sub_last=subLast=subr=sub_right=subRight=sub_tail
+subl=sublast=subt=sub_last=subLast=subr=sub_right=subRight=sub_tail
 	
 def del_sub(a,x,y,start=0,end=-1):
 	return a[start:x]+a[y:end]

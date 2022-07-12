@@ -217,7 +217,7 @@ def get_multi_return_list(*names,**defaults):
 	for name,default in defaults.items():
 		r.append( get(name,default=default) )
 	return r	
-multi_get=get_multi=get_multi_return_list
+getm=multi_get=get_multi=get_multi_return_list
 
 def get_multi_return_exist_one(*names,default=GET_NO_VALUE,no_raise=True):
 	for name in names:
@@ -593,6 +593,75 @@ u1604:  IPython repl  ok	,  bash python -c error  ?
 	tmux=tmuxc=tmuxcap=tmuxcapture=tmuxCapture=tmux_capture=tmux_capture_pane
 	
 ########################## end init #############################################
+def __import__(mod_name):
+	m=py.__import__(mod_name)
+	ss=mod_name.split('.')
+	for s in ss[1:]:
+		m=py.getattr(m,s)
+	return m
+_import=__import__
+	
+def PyFile_FromFd(fd,name="filename",mode='r',buffering=-1,encoding='utf-8'):
+	'''__builtin__.open 也可以打开 int，但是此时 tell好像不共享 ？
+		
+.. c:function:: PyObject* PyFile_FromFd(int fd, const char *name, const char *mode, int buffering, const char *encoding, const char *errors, const char *newline, int closefd)
+
+   Create a Python file object from the file descriptor of an already
+   opened file *fd*.  The arguments *name*, *encoding*, *errors* and *newline*
+   can be ``NULL`` to use the defaults; *buffering* can be *-1* to use the
+   default. *name* is ignored and kept for backward compatibility. Return
+   ``NULL`` on failure. For a more comprehensive description of the arguments,
+   please refer to the :func:`io.open` function documentation.
+
+   .. warning::
+
+     Since Python streams have their own buffering layer, mixing them with
+     OS-level file descriptors can produce various issues (such as unexpected
+     ordering of data).
+
+   .. versionchanged:: 3.2
+      Ignore *name* attribute.
+	  
+ PyFile_FromFd() 的最后一个参数被设置成1，用来指出Python应该关闭这个文件。	  
+ 
+ 和open 打开同一个文件，tell 和 seek 自动同步，因为就是同一个文件
+ 
+ 两个 PyFile_FromFd 一个是 r utf-8.一个是 rb。可以分别read str 和byte。但是 tell依然共享
+ 
+ 
+ 
+'''	  
+	import ctypes
+	f = ctypes.pythonapi.PyFile_FromFd
+	f.restype = ctypes.py_object
+	f.argtypes = [ctypes.c_int,
+				  ctypes.c_char_p,
+				  ctypes.c_char_p,
+				  ctypes.c_int,
+				  ctypes.c_char_p,
+				  ctypes.c_char_p,
+				  ctypes.c_char_p,
+				  ctypes.c_int ]
+				  
+	NULL=None
+	
+	if 'b' in mode:
+		bencoding=NULL
+	else:	
+		bencoding=encoding.encode('ascii')
+		bencoding=ctypes.create_string_buffer(bencoding)
+	
+	if not py.isbyte(name):name=name.encode(encoding)
+	name=ctypes.create_string_buffer(name)
+	
+	if not py.isbyte(mode):mode=mode.encode()
+	mode=ctypes.create_string_buffer(mode)
+	
+	
+	
+	return f(fd, name,mode,buffering,bencoding,NULL,NULL,1)						  
+	
+
 def new_2d_list(width,height,default_value=0):
 	''' cols=height   rows=width '''
 	return [[default_value for i in py.range(width)] for j in py.range(height)]
@@ -1426,9 +1495,9 @@ def sleep(asecond,print_time_every_n_second=0):
 		for i in range(asecond):
 			if i%print_time_every_n_second==0:
 				pln(stime())
-			__import__('time').sleep(1)	
+			py.__import__('time').sleep(1)	
 	else:	
-		__import__('time').sleep(asecond)
+		py.__import__('time').sleep(asecond)
 	return IntCustomRepr(asecond,repr='U.sleep(%s)'%asecond)
 delay=sleep
 	
@@ -1538,7 +1607,7 @@ env PATH  无论在Windows 还是 Linux 统一使用大写是好的选择
 
 		env=ec.update(env)
 	######## 参数处理完毕，准备开始运行
-	# r= __import__('subprocess').Popen(a)
+	# r= py.__import__('subprocess').Popen(a)
 	import subprocess
 	# env["PATH"] = "/usr/sbin:/sbin:" + env["PATH"]
 	r=subprocess.Popen(a, env=env) # Windows下 光标有不回位问题 U.run('cmd /c set',env={'zzzzz':U.stime()})
@@ -1603,6 +1672,21 @@ def this():
 		# txt(globals())
 		pln (__name__)
 
+def ipython_getoutput(a,return_list=False):
+	U,T,N,F=py.importUTNF()
+	if not U.isipy():
+		U.start_ipython()
+	sl=U.isipy().getoutput(a)
+	if return_list:return sl
+	return T.eol.join(sl)
+getoutput=ipy_getoutput=ipython_getoutput	
+
+
+def start_ipython():
+	import IPython
+	return IPython.start_ipython()
+start_ipy=ipy_start=ipython_start=start_ipython
+
 def ipyEmbed():
 	# global ipyEmbed
 	from IPython import embed
@@ -1657,7 +1741,7 @@ def repl(_=None,printCount=False,msg=''):
 			locals['_qgb']=_
 		else:
 			locals['_']=_
-	__import__('code').interact(banner="",local=locals)
+	py.__import__('code').interact(banner="",local=locals)
 	return
 	
 	# try:
@@ -2296,10 +2380,12 @@ def add(*a):
 		else:
 			raise NotImplementedError('not num type')
 	return r		
-def max_len(*a,return_value=False,return_index=False):
+def max_len(*a,return_value=False,return_index=False,**ka):
 	'''  max( *map(len,U.col(lr,5)) ) 
 max_len(dict)==max_len(dict.keys())	
 	'''
+	return_index=get_duplicated_kargs(ka,'index','i','n','enumerate',default=return_index)
+	
 	if py.len(a)==1:
 		a=a[0]
 		if py.isdict(a):
@@ -2691,7 +2777,7 @@ ValueError: Function has keyword-only parameters or annotations, use getfullargs
 	if py.getattr(getArgsDict,'debug',0):
 		pln(getArgsDict.__name__,'frame','args','rd')
 		# return frame,args,rd	
-		__import__('pdb').Pdb().set_trace()
+		py.__import__('pdb').Pdb().set_trace()
 	# while F.dir(frame.f_back.f_code.co_filename).endswith('qgb'):
 	tb=inspect.getframeinfo(frame.f_back)
 	# return frame
@@ -3144,9 +3230,17 @@ def float_with_default(obj,*other,default=None):
 	return FuncWrapForMultiArgs(f=better_float,args=(obj,other),default=default)
 float=float_with_default	
 
+def better_int(x,base=10):
+	'''
+	int([x]) -> integer
+int(x, base=10) -> integer
+'''
+	if py.istr(x):
+		x=x.replace(',','')
+	return py.int(x,base)
 def int_with_default(obj,*other,default=None):
 	''' FuncWrapForMultiArgs: if default!=None:'''
-	return FuncWrapForMultiArgs(f=py.int,args=(obj,other),default=default)
+	return FuncWrapForMultiArgs(f=better_int,args=(obj,other),default=default)
 int=int_with_default	
 	
 def least_common_multiple(x,y):
@@ -4524,7 +4618,7 @@ def nppMods(modName='qgb'):
 def backLocals(f=None,i=0,r=[]):
 	pln (i+1,'='*(20+i*2)  )
 	
-	if f is None and i==0:f=__import__('sys')._getframe()
+	if f is None and i==0:f=py.__import__('sys')._getframe()
 	try:pln (f.f_locals.keys()  );r.append(f.f_locals)
 	except:return r
 	return backLocals(f.f_back,i+1,r)	
@@ -5607,16 +5701,33 @@ def unique(iterable,count=False,return_list=False,**ka):
 		if i not in r:r.append(i)
 	return r
 
-def get_column_from_2D_list(matrix, *col_index):
+def get_column_from_2D_list(matrix, *col_index,no=None):
 	if not col_index:raise py.ArgumentError('need *col_index ')
+	
+	if py.isint(no):pass
+		# no=[no]
+	else:	
+		if not no      :no=None
+	
+	
+	
 	r=[]
 	m=py.len(col_index)
+	
 	for row in matrix:
+		# if no:
+#U.col(U.get('req_log'),0,1) 想到这个需求，如果列表中有列数不同的行，取相对值 ，比如说无论列数跳过最后 一列,no=-1。
+			# for n in no:
+				# if n<0:n=py.len(row)+n 
+				# if n==
 		if m==1:
 			l=row[col_index[0]]
 		else:
 			l=[]
 			for i in col_index:
+				if no!=None:
+					if no<0:no=py.len(row)+no
+					if i==no:continue
 				l.append(row[i])
 		r.append(l)
 	return r	
@@ -5880,7 +5991,7 @@ def get_objects(type,len=None):
 		if isinstance(o,type) or o is type:
 			r.append(o)
 	return r
-search_object=search_objects=find_objects=get_obj=get_objects
+search_object=search_objects=find_objects=get_obj=get_all_objects=get_objects
 
 def git_init(remote_url='',git_exe=None,**ka):
 	cmd=r''' 

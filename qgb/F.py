@@ -23,6 +23,12 @@ def setErr(ae):
 	else:
 		gError=ae
 	if U.gbPrintErr:U.pln('#Error ',ae)
+	
+def init_module():
+	global DEFAULT_ENCODING		
+	if DEFAULT_ENCODING is None:
+		DEFAULT_ENCODING=U.get_or_set('F.read.encoding',lazy_default=lambda:py.No('utf-8'))
+		
 ###################
 class IntSize(py.int):
 	def __new__(cls, *a, **ka):
@@ -811,13 +817,16 @@ def detect_file_encoding(file,confidence=0.7,default=py.No('not have default enc
 	return c
 detect=detectEncoding=detect_encoding=detect_file_encoding
 	
-def read(file,encoding='',mod='r',return_filename=False,print_detect_encoding=False,**ka):
+DEFAULT_ENCODING=None
+
+def read(file,encoding='utf-8',mod='r',return_filename=False,print_detect_encoding=False,**ka):
 	'''if return_filename:
 			return content,f.name
 1 not is 2
 	   ^
 SyntaxError: invalid syntax			
 			'''
+
 	file=autoPath(file)
 	if not encoding and print_detect_encoding:
 		U=py.importU()
@@ -836,10 +845,12 @@ SyntaxError: invalid syntax
 	else:#is3
 		#utf-8 /site-packages/astropy/coordinates/builtin_frames/__init__.py  {'confidence': 0.73, 'encoding': 'Windows-1252'
 		if encoding:
-			f=py.open(file,mod,encoding=encoding)
-			s=f.read()
-			f.close()
-		else:
+			try:
+				f=py.open(file,mod,encoding=encoding)
+				s=f.read()
+				f.close()
+			except:encoding=''
+		if not encoding:
 			U,T,N,F=py.importUTNF()	
 			r2=T.detect_and_decode(F.read_byte(file),confidence=0.9,default='utf-8',return_encoding=True)
 			if not r2:return r2
@@ -1184,6 +1195,10 @@ def list(ap='.',type='',t='',r=False,d=False,dir=False,f=False,
 		setErr('F.list arguments ap error')
 		ap='.'
 	# if len(ap)==2 and ap.endswith(':'):ap+='/'	
+	if U.isnix() and ap.startswith('~'):
+		if ap[1:2]=='/':ap=ap[2:]
+		else:ap=ap[1:]
+		ap=get_home()+ap
 	ap=ap.replace('\\','/')
 	if not ap.endswith('/'):#U.inMuti(ap,'/','\\',f=str.endswith):
 		if isDir(ap):
@@ -1225,10 +1240,14 @@ def list(ap='.',type='',t='',r=False,d=False,dir=False,f=False,
 ls=list
 
 def ll(ap='.',readable=True,type='',t='',r=False,d=False,dir=False,f=False,file=False,
-	return_dict=True,no_raise=True,**ka):
+	return_dict=True,return_list=False,no_raise=True,**ka):
 	'''return {file : [size,atime,mtime,ctime,st_mode]}
 	readable is True: Size,Stime,..
 	linux struct stat: http://pubs.opengroup.org/onlinepubs/009695399/basedefs/sys/stat.h.html'''
+	U=py.importU()
+	return_list=U.get_duplicated_kargs(ka,'return_list','rl','list',default=return_list)
+	if return_list:return_dict=False
+	
 	dr={}
 	
 	for i in list(ap,type=type,t=t,r=r,d=d,dir=dir,f=f,file=file):#ls 肯定返回 list类型！
@@ -1238,7 +1257,7 @@ def ll(ap='.',readable=True,type='',t='',r=False,d=False,dir=False,f=False,file=
 		except:
 			continue
 		if readable:
-			U=py.importU()
+			
 			IntSize,FloatTime,IntOct=U.IntSize,U.FloatTime,U.IntOct
 			try:
 				dr[i]=[ IntSize(size(i)),
@@ -1255,7 +1274,7 @@ def ll(ap='.',readable=True,type='',t='',r=False,d=False,dir=False,f=False,file=
 				
 		else:
 			dr[i]=[size(i),s.st_atime,s.st_mtime,s.st_ctime,s.st_mode]
-	if return_dict:
+	if return_dict or not return_list:
 		return dr
 	else:
 		return [[k,*v] for k,v in dr.items()]
@@ -1316,7 +1335,7 @@ def size_single_file(f):
 		
 get_single_file_size=single_file_size=size_single_file
 	
-def size(asf,int=py.No('ipython auto readable')): 
+def size(asf,int=py.No('ipython auto readable'),repr_size=0): 
 	'''file or path return byte count
 	not exist return -1'''
 	asf=nt_path(asf)#if linux etc ,will auto ignored
@@ -1337,7 +1356,7 @@ def size(asf,int=py.No('ipython auto readable')):
 	U=py.importU()
 	# U.msgbox(U.is_ipy_cell())
 	if not int :#and U.is_ipy_cell():
-		size=U.IntSize(size)
+		size=U.IntSize(size,size=repr_size)
 	return size 
 	
 # U.pln size(U.gst)

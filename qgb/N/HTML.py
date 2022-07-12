@@ -8,7 +8,162 @@ else:
 	from qgb import py
 U,T,N,F=py.importUTNF()
 
-def a_href(response,u):
+def fullscreen_img(response,img):
+	if py.istr(img) and '://' in img:
+		u=img
+	else:
+		k='img-%s'%py.id(img)
+		U.set(k,img)
+		u=U.get('rpc.server.base')+f"N.img(p,U.get({repr(k)}))"
+
+	html='''
+<!doctype html>
+<html lang="en"><head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>HTML5 Fullscreen API
+</title>
+
+<style type="text/css">
+body {
+	background-color: #f3f3f3;
+	margin: 0; /* 修复 左上 白边  【user agent stylesheet 8px】无效 */
+}
+
+.html5-fullscreen-api {
+	position: relative;
+}
+.html5-fullscreen-api img {
+	max-width: 100%;
+	border: 0px solid #fff;
+	box-shadow: 0px 0px 50px #ccc;
+}
+.html5-fullscreen-api .fs-button {
+	z-index: 100;
+	display: inline-block;
+	position: absolute;
+	top: 0px;
+	right: 0px;
+	cursor: pointer;
+}
+.html5-fullscreen-api .fs-button:after {
+	display: inline-block;
+	width: 100%;
+	height: 100%;
+	font-size: 32px;
+	font-family: 'ModernPictogramsNormal';
+	color: rgba(255,255,255,.5);
+	cursor: pointer;
+	content: "v";
+}
+.html5-fullscreen-api .fs-button:hover:after {
+	color: rgb(255,255,255);
+}
+#fullscreen:-webkit-full-screen .fs-button:after {
+	content: "X";
+}
+#fullscreen:-webkit-full-screen {
+	width: 100%;
+}
+#fullscreen:-webkit-full-screen img {
+	display: block;
+	height: 100%;
+	margin-left: auto;
+	margin-right: auto
+}
+
+#fullscreen:-moz-full-screen .fs-button:after {
+	content: "X";
+}
+#fullscreen:-moz-full-screen {
+	width: 100%;
+}
+#fullscreen:-moz-full-screen img {
+	display: block;
+	height: 100%;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+img{
+		width:100%;
+		padding: 0 0 0 0;		
+		margin: 0 0 0 0;
+		
+}
+
+</style> 
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+
+<script>
+$(document).ready(function(){
+	$('.fs-button').on('click', function(){
+		var elem = document.getElementById('fullscreen');
+
+        if (
+            document.fullscreenEnabled ||
+            document.webkitFullscreenEnabled ||
+            document.mozFullScreenEnabled ||
+            document.msFullscreenEnabled
+        ) {
+            if (
+                document.fullscreenElement ||
+                document.webkitFullscreenElement ||
+                document.mozFullScreenElement ||
+                document.msFullscreenElement
+            ) {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            } else {
+                if (elem.requestFullscreen) {
+                    elem.requestFullscreen();
+                } else if (elem.webkitRequestFullscreen) {
+                    elem.webkitRequestFullscreen();
+                } else if (elem.mozRequestFullScreen) {
+                    elem.mozRequestFullScreen();
+                } else if (elem.msRequestFullscreen) {
+                    elem.msRequestFullscreen();
+                }
+            }
+        } else {
+            alert('Fullscreen is not supported on your browser.');
+        }
+	});
+});
+
+setTimeout(function(){
+	// $('.fs-button').click()
+},666)
+</script>
+</head>
+
+<body>
+
+<div id="fullscreen" class="html5-fullscreen-api">
+	<img src="img_url">
+	<span class="fs-button"></span>
+</div>
+
+
+</body>
+</html>
+
+'''.replace('img_url',u) # %py.locals()
+	response.headers['Content-Type']='text/html;charset=utf-8';
+	response.set_data(html)
+	return 	html
+fsimg=imgfs=fullscreen_img
+
+def a_href(response,u=''):
+	if not u:
+		u=U.cbg()
 	u=N.auto_url(u)
 	html=f"""
 <a href="{u}">{u}</a>	
@@ -16,9 +171,9 @@ def a_href(response,u):
 	response.headers['Content-Type']='text/html;charset=utf-8';
 	response.set_data(html)
 	return 
-href=a_href	
+HREF=URL=href=a_href	
 
-def list2d(response,a,file_column=None,index=False,sort_kw=U.SORT_KW_SKIP,**ka):
+def list_2d(response,a,file_column=None,index=False,sort_kw=U.SORT_KW_SKIP,debug=False,**ka):
 	file_column=U.get_duplicated_kargs(ka,'file_column','cf','fc','f_col','fcol','fcolumn',default=file_column)
 	index=U.get_duplicated_kargs(ka,'index','n','enu','add_index','enumerate',default=index)
 	sort_kw=U.get_duplicated_kargs(ka,'skw','sort','s',default=sort_kw)
@@ -34,6 +189,20 @@ def list2d(response,a,file_column=None,index=False,sort_kw=U.SORT_KW_SKIP,**ka):
 	df = pd.DataFrame(data=a)
 	html=df.to_html(index=index) 
 	
+# <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	head='''
+<head>
+<style type="text/css">
+	table,th,td,textarea{
+		padding:0px;
+		margin:0px;
+		border:1px solid green;/*没有solid 导致分割线消失*/
+		border-spacing: 0px;
+	}
+</style> 
+</head>
+'''	
+	html=head+html
 	if py.isint(file_column):
 		if file_column <0:file_column=py.len(a[0])+file_column
 		from bs4 import BeautifulSoup
@@ -43,8 +212,10 @@ def list2d(response,a,file_column=None,index=False,sort_kw=U.SORT_KW_SKIP,**ka):
 		url_read='a=N.geta();N.flask_text_response(p,F.read(a))%23-'#有些txt文件会变下载框
 		# url_read='a=N.geta();N.html(p,F.read(a))%23-'
 		
-		
 		bs=T.BeautifulSoup(html)
+		if debug:
+			U.set('html',html)
+			U.set('bs',bs)
 		es=bs.select(f'body > table > tbody > tr > td:nth-of-type({1+file_column})')
 		for ne,e in py.enumerate(es):
 			f=a[ne][file_column]
@@ -70,7 +241,7 @@ def list2d(response,a,file_column=None,index=False,sort_kw=U.SORT_KW_SKIP,**ka):
 	response.headers['Content-Type']='text/html;charset=utf-8';
 	response.set_data(html)
 	return a
-table=l2d=list2d
+list=table=l2d=_2d_list=list2d=list_2d
 
 def everything_search_image(response,add_offset=32,**ka):
 	U.r(py,U,T,N,F,N.HTTP,N.HTML,)
@@ -82,7 +253,7 @@ def everything_search_image(response,add_offset=32,**ka):
 	request,ucode,a=N.geta(return_other_url={'url_decode':1,'%23-':1},return_request=True)
 	
 	U.set('rf',request.form )
-	if request.form.get('a',''):
+	if request.form.get('a',''):	
 		a=request.form.get('a','')
 
 	
@@ -759,7 +930,7 @@ def select(iterable,**ka):
 			# fk=lambda k: T.html_encode(repr(k))  #为啥会出现 0 ☑ q." checked > '
 			fk=lambda _k:T.html_encode(repr(_k))  
 			fv=lambda _v:T.html_encode(repr(_v)[:155-1] )# 全中文 80% 正好两行
-			# U.msgbox(list(kv)[:9])
+			# U.msgbox(py.list(kv)[:9])
 			for k,v in kv:
 				# k,v=fk(k),fv(v)
 				# U.msgbox(k,v)
